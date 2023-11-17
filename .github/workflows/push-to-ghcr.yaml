@@ -1,0 +1,18 @@
+name: Publish Image
+on:
+  release:
+    types: [ published ]
+  push:
+    branches:
+      - master
+
+jobs:
+  docker_publish:
+    runs-on: "ubuntu-22.04"
+    steps:
+      - uses: actions/checkout@v2
+      - name: push-to-ghcr
+        uses: macbre/push-to-ghcr@master
+        with:
+          image_name: ${{ github.repository }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
