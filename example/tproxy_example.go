@@ -27,6 +27,7 @@ var (
 
 var (
 	port = flag.Int("port", 8080, "TCP/UDP port that accepts proxied connections")
+	nat  = flag.Bool("nat", false, "If false, use original source address for proxied connections. If true, use an address local to the proxy.")
 )
 
 // main will initialize the TProxy
@@ -120,7 +121,12 @@ func handleUDPConn(data []byte, srcAddr, dstAddr *net.UDPAddr) {
 	}
 	defer localConn.Close()
 
-	remoteConn, err := tproxy.DialUDP("udp", srcAddr, dstAddr)
+	var remoteConn *net.UDPConn
+	if *nat {
+		remoteConn, err = net.DialUDP("udp", nil, dstAddr)
+	} else {
+		remoteConn, err = tproxy.DialUDP("udp", srcAddr, dstAddr)
+	}
 	if err != nil {
 		log.Printf("Failed to connect to original UDP destination [%s]: %s", dstAddr.String(), err)
 		return
@@ -166,8 +172,8 @@ func handleUDPConn(data []byte, srcAddr, dstAddr *net.UDPAddr) {
 func handleTCPConn(conn net.Conn) {
 	log.Printf("Accepting TCP connection from %s with destination of %s", conn.RemoteAddr().String(), conn.LocalAddr().String())
 	defer conn.Close()
-	
-	remoteConn, err := conn.(*tproxy.Conn).DialOriginalDestination(false)
+
+	remoteConn, err := conn.(*tproxy.Conn).DialOriginalDestination(*nat)
 	if err != nil {
 		log.Printf("Failed to connect to original destination [%s]: %s", conn.LocalAddr().String(), err)
 		return
