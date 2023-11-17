@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"io"
 	"log"
 	"net"
@@ -24,14 +25,20 @@ var (
 	udpListener *net.UDPConn
 )
 
+var (
+	port = flag.Int("port", 8080, "TCP/UDP port that accepts proxied connections")
+)
+
 // main will initialize the TProxy
 // handling application
 func main() {
 	log.Println("Starting GoLang TProxy example")
 	var err error
 
-	log.Println("Binding TCP TProxy listener to 0.0.0.0:8080")
-	tcpListener, err = tproxy.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 8080})
+	flag.Parse()
+
+	log.Printf("Binding TCP TProxy listener to 0.0.0.0:%d\n", *port)
+	tcpListener, err = tproxy.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: *port})
 	if err != nil {
 		log.Fatalf("Encountered error while binding listener: %s", err)
 		return
@@ -40,8 +47,8 @@ func main() {
 	defer tcpListener.Close()
 	go listenTCP()
 
-	log.Println("Binding UDP TProxy listener to 0.0.0.0:8080")
-	udpListener, err = tproxy.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: 8080})
+	log.Printf("Binding UDP TProxy listener to 0.0.0.0:%d\n", *port)
+	udpListener, err = tproxy.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: *port})
 	if err != nil {
 		log.Fatalf("Encountered error while binding UDP listener: %s", err)
 		return
